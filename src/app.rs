@@ -200,9 +200,9 @@ pub enum AppMsg {
 impl AppState {
     pub fn send(&self, e: EventToSub) {
         if let Some(sender) = &self.sender {
-            sender.send(e).unwrap();
-
-            // block_on(sender.send(e)).unwrap();
+            if let Err(err) = sender.send(e) {
+                debug!(?err, "monitor subscription is no longer listening");
+            }
         }
     }
 
