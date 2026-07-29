@@ -12,7 +12,7 @@ mod config;
 mod icon;
 mod localize;
 mod monitor;
-mod osd;
+mod osd_client;
 mod shortcut;
 mod view;
 

@@ -4,7 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::config::{self, Config, MonitorConfig};
 use crate::monitor;
 use crate::monitor::{DisplayId, EventToSub, MonitorInfo, ScreenBrightness};
-use crate::osd;
+use crate::osd_client;
 use crate::shortcut;
 use anyhow::anyhow;
 use cosmic::Element;
@@ -167,7 +167,6 @@ pub struct AppState {
     pub config: Config,
     config_handler: CosmicConfig,
     last_quit: Option<(u128, PopupKind)>,
-    osd: Option<osd::State>,
 }
 
 #[derive(Clone, Debug)]
@@ -175,8 +174,7 @@ pub enum AppMsg {
     TogglePopup,
     ToggleQuickSettings,
     ClosePopup,
-    OsdRequested,
-    Osd(osd::Msg),
+    OsdRequestFinished,
 
     ConfigChanged(Config),
     ThemeModeConfigChanged(ThemeMode),
@@ -230,19 +228,16 @@ impl AppState {
                 / self.monitors.len() as f32
         };
 
-        self.show_local_osd(brightness)
+        self.show_brightness_osd(brightness)
     }
 
-    fn show_local_osd(&mut self, brightness: f32) -> Task<AppMsg> {
-        if let Some(state) = &mut self.osd {
-            state
-                .replace_brightness(brightness)
-                .map(|x| cosmic::Action::App(AppMsg::Osd(x)))
-        } else {
-            let (state, cmd) = osd::State::new(brightness);
-            self.osd = Some(state);
-            cmd
-        }
+    fn show_brightness_osd(&mut self, brightness: f32) -> Task<AppMsg> {
+        cosmic::task::future(async move {
+            if let Err(err) = osd_client::show_brightness(brightness).await {
+                warn!("failed to show brightness OSD: {err}");
+            }
+            AppMsg::OsdRequestFinished
+        })
     }
 }
 
@@ -270,7 +265,6 @@ impl cosmic::Application for AppState {
             theme_mode_config: ThemeMode::default(),
             sender: None,
             last_quit: None,
-            osd: None,
         };
 
         (window, Task::none())
@@ -296,21 +290,14 @@ impl cosmic::Application for AppState {
             }
             AppMsg::ToggleQuickSettings => return self.toggle_popup(PopupKind::QuickSettings),
             AppMsg::ClosePopup => return self.close_popup(),
-            AppMsg::OsdRequested => {}
-            AppMsg::Osd(msg) => {
-                if let Some(state) = self.osd.take() {
-                    let (state, cmd) = state.update(msg);
-                    self.osd = state;
-                    return cmd.map(|x| cosmic::Action::App(AppMsg::Osd(x)));
-                }
-            }
+            AppMsg::OsdRequestFinished => {}
             AppMsg::SetScreenBrightness(id, slider_brightness) => {
                 if let Some(monitor) = self.monitors.get_mut(&id) {
                     monitor.slider_brightness = slider_brightness;
                     let gamma = self.config.get_gamma_map(&id);
                     let b = monitor.get_mapped_brightness(gamma);
                     self.send(EventToSub::Set(id, b));
-                    return self.show_local_osd(b as f32 / 100.0);
+                    return self.show_brightness_osd(b as f32 / 100.0);
                 }
             }
             AppMsg::ChangeGlobalBrightness { delta } => {
@@ -423,13 +410,7 @@ impl cosmic::Application for AppState {
         self.applet_button_view()
     }
 
-    fn view_window(&self, id: Id) -> Element<'_, Self::Message> {
-        if let Some(osd) = &self.osd
-            && osd.id() == id
-        {
-            return osd.view().map(AppMsg::Osd);
-        }
-
+    fn view_window(&self, _id: Id) -> Element<'_, Self::Message> {
         let Some(popup) = &self.popup else {
             return Space::new().into();
         };

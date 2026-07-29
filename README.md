@@ -2,6 +2,32 @@
 
 Change brightness of external monitors via DDC/CI protocol. You can also quickly toggle system dark mode.
 
+## Keyboard shortcuts
+
+Global shortcuts are configured in **COSMIC Settings → Keyboard → Custom
+Shortcuts**. Assign the applet's commands there:
+
+- Increase brightness: `cosmic-ext-applet-external-monitor-brightness --increase`
+- Decrease brightness: `cosmic-ext-applet-external-monitor-brightness --decrease`
+
+These commands contact the running applet through the session bus, so they do
+not start a second applet or re-enumerate monitors. The applet must be running.
+For a Flatpak installation, use `flatpak run
+io.github.cosmic_utils.cosmic-ext-applet-external-monitor-brightness --increase`
+or replace `--increase` with `--decrease`.
+
+## On-screen display helper
+
+`cosmic-external-osd` is a small D-Bus-activated companion process
+from the separate `cosmic-external-osd` project. It owns the desktop OSD surface because panel
+applets run through COSMIC Panel's private Wayland socket and cannot reliably
+create desktop-wide layer surfaces themselves.
+
+The applet sends brightness values to the helper over the session bus. The
+helper is idle until needed, connects directly to the desktop Wayland display,
+and can also show the selected audio output for
+[`cosmic-audio-switch`](../cosmic-audio-switch/).
+
 ![Screenshot](res/screenshot1.png)
 
 ## Troubleshooting
