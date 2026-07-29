@@ -2,6 +2,12 @@
 
 Change brightness of external monitors via DDC/CI protocol. You can also quickly toggle system dark mode.
 
+## Install
+
+```bash
+yay -S cosmic-ext-applet-external-monitor-brightness-custom-git
+```
+
 ## Keyboard shortcuts
 
 Global shortcuts are configured in **COSMIC Settings → Keyboard → Custom
