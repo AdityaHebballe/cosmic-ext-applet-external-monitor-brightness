@@ -12,6 +12,8 @@ mod config;
 mod icon;
 mod localize;
 mod monitor;
+mod osd_client;
+mod shortcut;
 mod view;
 
 fn setup_logs() {
@@ -38,6 +40,20 @@ fn setup_logs() {
 }
 
 fn main() -> cosmic::iced::Result {
+    let shortcut_delta = match std::env::args().skip(1).next().as_deref() {
+        Some("--increase") => Some(0.05),
+        Some("--decrease") => Some(-0.05),
+        _ => None,
+    };
+
+    if let Some(delta) = shortcut_delta {
+        if let Err(err) = shortcut::request_change(delta) {
+            eprintln!("Could not contact the running brightness applet: {err}");
+            std::process::exit(1);
+        }
+        return Ok(());
+    }
+
     for arg in std::env::args().skip(1) {
         if arg == "-V" || arg == "--version" {
             let version = env!("CARGO_PKG_VERSION");

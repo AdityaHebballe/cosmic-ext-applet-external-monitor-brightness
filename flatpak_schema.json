@@ -10,6 +10,8 @@
   "finish-args": [
     "--share=ipc",
     "--socket=wayland",
+    "--socket=session-bus",
+    "--own-name=io.github.cosmic_utils.cosmic-ext-applet-external-monitor-brightness",
     "--talk-name=com.system76.CosmicSettingsDaemon",
     "--device=all",
     "--filesystem=xdg-config/cosmic/com.system76.CosmicTheme.Mode:rw",
