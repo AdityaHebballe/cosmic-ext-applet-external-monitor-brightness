@@ -6,24 +6,25 @@ license = "GPL-3.0-only"
 repository = "https://github.com/cosmic-utils/cosmic-ext-applet-external-monitor-brightness"
 
 [dependencies]
-ddc-hi = "0.4"
-i18n-embed = { version = "0.16", features = [
+ddc-hi = "0.4.1"
+i18n-embed = { version = "0.16.0", features = [
     "fluent-system",
     "desktop-requester",
 ] }
 i18n-embed-fl = "0.10"
-rust-embed = { version = "8", features = ["debug-embed"] }
+rust-embed = { version = "8.11.0", features = ["debug-embed"] }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+tracing-subscriber = { version = "0.3.22", features = ["fmt", "env-filter"] }
 tracing-journald = "0.3"
-tokio = { version = "1", features = ["sync"] }
-serde = "1"
+tokio = { version = "1.52.1", features = ["sync"] }
+serde = { version = "1.0.228", features = ["derive"] }
 dirs = "6"
-anyhow = "1"
+anyhow = "1.0.102"
+zbus = { version = "5.14", default-features = false, features = ["tokio", "blocking-api"] }
 
 [dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic"
-# rev = "f0f68933f1552857e2165fc0fa953228107bddef"
+rev = "511384f6206527cf87369da67a9164831afbabef"
 default-features = false
 features = ["applet", "tokio", "wayland"]
 
