@@ -58,6 +58,12 @@ enum PopupKind {
     QuickSettings,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum PopupPage {
+    Main,
+    Settings,
+}
+
 fn now() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -80,6 +86,7 @@ impl AppState {
     }
 
     fn close_popup(&mut self) -> Task<AppMsg> {
+        self.popup_page = PopupPage::Main;
         for mon in self.monitors.values_mut() {
             mon.settings_expanded = false;
         }
@@ -167,6 +174,7 @@ pub struct AppState {
     pub config: Config,
     config_handler: CosmicConfig,
     last_quit: Option<(u128, PopupKind)>,
+    pub popup_page: PopupPage,
 }
 
 #[derive(Clone, Debug)]
@@ -185,6 +193,11 @@ pub enum AppMsg {
     ChangeGlobalBrightness {
         delta: f32,
     },
+    IncreaseGlobalBrightness,
+    DecreaseGlobalBrightness,
+    ShowSettings,
+    ShowMain,
+    SetShortcutBrightnessStep(u8),
     ToggleMonSettings(DisplayId),
     SetMonGammaMap(DisplayId, f32),
 
@@ -265,6 +278,7 @@ impl cosmic::Application for AppState {
             theme_mode_config: ThemeMode::default(),
             sender: None,
             last_quit: None,
+            popup_page: PopupPage::Main,
         };
 
         (window, Task::none())
@@ -318,6 +332,27 @@ impl cosmic::Application for AppState {
                 }
 
                 return self.show_osd();
+            }
+            AppMsg::IncreaseGlobalBrightness => {
+                return self.update(AppMsg::ChangeGlobalBrightness {
+                    delta: self.config.shortcut_brightness_step() as f32 / 100.0,
+                });
+            }
+            AppMsg::DecreaseGlobalBrightness => {
+                return self.update(AppMsg::ChangeGlobalBrightness {
+                    delta: -(self.config.shortcut_brightness_step() as f32 / 100.0),
+                });
+            }
+            AppMsg::ShowSettings => self.popup_page = PopupPage::Settings,
+            AppMsg::ShowMain => self.popup_page = PopupPage::Main,
+            AppMsg::SetShortcutBrightnessStep(step) => {
+                let step = step.clamp(1, 20);
+                if let Err(e) = self
+                    .config
+                    .set_shortcut_brightness_step(&self.config_handler, step)
+                {
+                    error!("can't write shortcut brightness step: {e}");
+                }
             }
             AppMsg::ToggleMinMaxBrightness(id) => {
                 if let Some(monitor) = self.monitors.get_mut(&id) {
@@ -416,7 +451,10 @@ impl cosmic::Application for AppState {
         };
 
         let view = match &popup.kind {
-            PopupKind::Popup => self.popup_view(),
+            PopupKind::Popup => match self.popup_page {
+                PopupPage::Main => self.popup_view(),
+                PopupPage::Settings => self.settings_view(),
+            },
             PopupKind::QuickSettings => self.quick_settings_view(),
         };
 

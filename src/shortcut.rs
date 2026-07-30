@@ -16,22 +16,18 @@ struct ShortcutService {
 #[zbus::interface(name = "io.github.cosmic_utils.ExternalMonitorBrightness")]
 impl ShortcutService {
     async fn increase(&self) {
-        self.change(0.05).await;
+        self.change(AppMsg::IncreaseGlobalBrightness).await;
     }
 
     async fn decrease(&self) {
-        self.change(-0.05).await;
+        self.change(AppMsg::DecreaseGlobalBrightness).await;
     }
 }
 
 impl ShortcutService {
-    async fn change(&self, delta: f32) {
+    async fn change(&self, message: AppMsg) {
         let mut output = self.output.clone();
-        if output
-            .send(AppMsg::ChangeGlobalBrightness { delta })
-            .await
-            .is_err()
-        {
+        if output.send(message).await.is_err() {
             error!("brightness shortcut receiver closed");
         }
     }

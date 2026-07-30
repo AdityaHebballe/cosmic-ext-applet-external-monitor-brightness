@@ -15,9 +15,19 @@ pub const CONFIG_VERSION: u64 = 1;
 
 #[derive(Clone, CosmicConfigEntry, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(default)]
-#[derive(Default)]
 pub struct Config {
     pub monitors: HashMap<DisplayId, MonitorConfig>,
+    /// Percentage points changed by the increase/decrease shortcut commands.
+    pub shortcut_brightness_step: u8,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            monitors: HashMap::new(),
+            shortcut_brightness_step: 5,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -34,6 +44,10 @@ impl MonitorConfig {
 impl Config {
     pub fn get_gamma_map(&self, id: &str) -> f32 {
         self.monitors.get(id).map(|m| m.gamma_map).unwrap_or(1.)
+    }
+
+    pub fn shortcut_brightness_step(&self) -> u8 {
+        self.shortcut_brightness_step.clamp(1, 20)
     }
 }
 

@@ -18,6 +18,8 @@ Shortcuts**. Assign the applet's commands there:
 
 These commands contact the running applet through the session bus, so they do
 not start a second applet or re-enumerate monitors. The applet must be running.
+Use the gear button in the applet popup to choose the percentage step used by
+both commands (5% by default).
 For a Flatpak installation, use `flatpak run
 io.github.cosmic_utils.cosmic-ext-applet-external-monitor-brightness --increase`
 or replace `--increase` with `--decrease`.

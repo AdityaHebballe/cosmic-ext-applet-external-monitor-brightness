@@ -61,11 +61,59 @@ impl AppState {
     pub fn popup_view(&self) -> Element<'_, AppMsg> {
         column::with_capacity(3)
             .padding(10)
+            .push(
+                row::with_capacity(2)
+                    .align_y(Alignment::Center)
+                    .push(horizontal())
+                    .push(
+                        button::icon(
+                            icon::from_name("preferences-system-symbolic")
+                                .size(self.core.applet.suggested_size(true).0),
+                        )
+                        .on_press(AppMsg::ShowSettings),
+                    ),
+            )
             .push_maybe(self.monitors_view())
             .push_maybe(
                 (!self.monitors.is_empty()).then(|| padded_control(divider::horizontal::default())),
             )
             .push(self.dark_mode_view())
+            .into()
+    }
+
+    pub fn settings_view(&self) -> Element<'_, AppMsg> {
+        let size = self.core.applet.suggested_size(true).0;
+        let step = self.config.shortcut_brightness_step();
+
+        column::with_capacity(2)
+            .width(Length::Fixed(300.0))
+            .padding(12)
+            .spacing(12)
+            .push(
+                row::with_capacity(3)
+                    .width(Length::Fill)
+                    .align_y(Alignment::Center)
+                    .push(
+                        button::icon(icon::from_name("go-previous-symbolic").size(size))
+                            .on_press(AppMsg::ShowMain),
+                    )
+                    .push(text(fl!("settings")).size(size))
+                    .push(horizontal()),
+            )
+            .push(
+                column::with_capacity(2)
+                    .width(Length::Fill)
+                    .padding([0, 8])
+                    .spacing(8.0)
+                    .push(text(fl!("shortcut_brightness_step")))
+                    .push(
+                        row::with_capacity(2)
+                            .spacing(12)
+                            .align_y(Alignment::Center)
+                            .push(slider(1..=20, step, AppMsg::SetShortcutBrightnessStep))
+                            .push(text(format!("{step}%")).size(16).width(Length::Fixed(40.0))),
+                    ),
+            )
             .into()
     }
 
