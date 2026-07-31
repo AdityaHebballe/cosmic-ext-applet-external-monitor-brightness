@@ -114,6 +114,15 @@ pub fn sub() -> impl Stream<Item = AppMsg> {
                         let last = rx.borrow_and_update().clone();
                         match last {
                             EventToSub::Refresh => {
+                                // A monitor can be temporarily unavailable while the session or
+                                // display link is restarting. Once the initial retries are
+                                // exhausted, `displays` may be empty; re-reading that empty map
+                                // can never discover the monitor again.
+                                if displays.is_empty() {
+                                    state = State::Waiting;
+                                    continue;
+                                }
+
                                 for (id, display) in displays {
                                     let res = display
                                         .lock()
