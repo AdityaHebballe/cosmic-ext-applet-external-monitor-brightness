@@ -24,7 +24,7 @@ zbus = { version = "5.14", default-features = false, features = ["tokio", "block
 
 [dependencies.libcosmic]
 git = "https://github.com/pop-os/libcosmic"
-rev = "03c8f93b294ad239ea935f6dd3c14a15acde8d0d"
+rev = "dd108aa99d7306110eef06da43eafc109e1ab151"
 default-features = false
 features = ["applet", "tokio", "wayland"]
 
